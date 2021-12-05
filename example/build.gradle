@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+    id 'com.google.cloud.tools.jib' version "3.1.4"
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations {
+    distrolessCp
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+dependencies {
+    distrolessCp('io.github.unapplicable:kubectl-cp-distroless:1.0') {
+        attributes{
+            it.attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.SHADOWED))
+        }
+    }
+}
+
+task extractDistrolessCp(type: Copy) {
+    from configurations.distrolessCp.files.first()
+    into('build/distrolessCp/usr/bin/')
+    rename { _ -> 'tar' }
+}
+tasks.jibDockerBuild.dependsOn extractDistrolessCp
+
+jib {
+    from.image = "gcr.io/distroless/java:11"
+
+    to {
+        image = 'unapplicable.github.io/kubectl-cp-distroless-example'
+    }
+
+    extraDirectories {
+        paths {
+            path {
+                from = 'build/distrolessCp'
+                into = '/'
+            }
+        }
+        permissions = [
+                '/usr/bin/tar': '755'
+        ]
+    }
+}

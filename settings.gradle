@@ -1,0 +1,4 @@
+rootProject.name = 'kubectl-cp-distroless'
+include 'example'
+include 'javatar'
+
